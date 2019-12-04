@@ -16,7 +16,9 @@
  */
 package org.superbiz.moviefun.albums;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
@@ -27,17 +29,17 @@ import java.util.List;
 @Repository
 public class AlbumsBean {
 
-    @PersistenceContext
-    private EntityManager entityManager;
+    @PersistenceContext(unitName = "AlbumPers")
+    private EntityManager albumsPlatformManager;
 
-    @Transactional
+//    @Transactional
     public void addAlbum(Album album) {
-        entityManager.persist(album);
+        albumsPlatformManager.persist(album);
     }
 
     public List<Album> getAlbums() {
-        CriteriaQuery<Album> cq = entityManager.getCriteriaBuilder().createQuery(Album.class);
+        CriteriaQuery<Album> cq = albumsPlatformManager.getCriteriaBuilder().createQuery(Album.class);
         cq.select(cq.from(Album.class));
-        return entityManager.createQuery(cq).getResultList();
+        return albumsPlatformManager.createQuery(cq).getResultList();
     }
 }

@@ -17,6 +17,7 @@
 package org.superbiz.moviefun.movies;
 
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
@@ -29,14 +30,15 @@ import java.util.List;
 @Repository
 public class MoviesBean {
 
-    @PersistenceContext
+    @PersistenceContext(unitName = "MoviePers")
     private EntityManager entityManager;
+
 
     public Movie find(Long id) {
         return entityManager.find(Movie.class, id);
     }
 
-    @Transactional
+    //    @Transactional
     public void addMovie(Movie movie) {
         entityManager.persist(movie);
     }
