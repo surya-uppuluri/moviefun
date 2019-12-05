@@ -1,5 +1,6 @@
 package org.superbiz.moviefun.blobstore;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.tika.Tika;
 import org.apache.tika.io.IOUtils;
 
@@ -10,6 +11,7 @@ import java.io.IOException;
 import java.util.Optional;
 
 
+@Slf4j
 public class FileStore implements BlobStore {
 
     private final Tika tika = new Tika();

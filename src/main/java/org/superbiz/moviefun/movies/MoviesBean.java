@@ -16,6 +16,7 @@
  */
 package org.superbiz.moviefun.movies;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +28,7 @@ import javax.persistence.metamodel.EntityType;
 import java.util.List;
 
 @Repository
+@Slf4j
 public class MoviesBean {
 
     @PersistenceContext
@@ -38,7 +40,7 @@ public class MoviesBean {
 
     @Transactional
     public void addMovie(Movie movie) {
-        System.err.println("Creating movie with title " + movie.getTitle() +
+       log.debug("Creating movie with title " + movie.getTitle() +
             ", and year " + movie.getYear());
 
         entityManager.persist(movie);
