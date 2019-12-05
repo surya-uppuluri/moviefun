@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.superbiz.moviefun.S3Store;
 import org.superbiz.moviefun.blobstore.Blob;
+import org.superbiz.moviefun.blobstore.BlobStore;
 
 import java.io.*;
 import java.lang.reflect.Array;
@@ -27,13 +28,13 @@ import static java.nio.file.Files.readAllBytes;
 @RequestMapping("/albums")
 public class AlbumsController {
 
-    private S3Store s3Store;
+    private BlobStore blobStore;
 
     private final AlbumsBean albumsBean;
 
-    public AlbumsController(AlbumsBean albumsBean, S3Store s3Store) {
+    public AlbumsController(AlbumsBean albumsBean, BlobStore blobStore) {
         this.albumsBean = albumsBean;
-        this.s3Store = s3Store;
+        this.blobStore = blobStore;
     }
 
 
@@ -58,13 +59,13 @@ public class AlbumsController {
         InputStream inputStream = new BufferedInputStream(uploadedFile.getInputStream());
         blob.setContentType(new Tika().detect(inputStream));
         blob.setInputStream(inputStream);
-        s3Store.put(blob);
+        blobStore.put(blob);
         return format("redirect:/albums/%d", albumId);
     }
 
     @GetMapping("/{albumId}/cover")
     public HttpEntity<byte[]> getCover(@PathVariable long albumId) throws IOException, URISyntaxException {
-        Blob resultBlob = s3Store.get("covers/" + albumId).get();
+        Blob resultBlob = blobStore.get("covers/" + albumId).get();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.parseMediaType(resultBlob.getContentType()));
         headers.setContentLength(resultBlob.getInputStream().available());
