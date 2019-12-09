@@ -3,13 +3,17 @@ package org.superbiz.moviefun.albums;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
+import org.apache.tika.io.IOUtils;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.superbiz.moviefun.blobstore.Blob;
 import org.superbiz.moviefun.blobstore.BlobStore;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -30,11 +34,11 @@ public class AlbumsUpdater {
         this.albumsBean = albumsBean;
 
         CsvSchema schema = CsvSchema.builder()
-            .addColumn("artist")
-            .addColumn("title")
-            .addColumn("year", NUMBER)
-            .addColumn("rating", NUMBER)
-            .build();
+                .addColumn("artist")
+                .addColumn("title")
+                .addColumn("year", NUMBER)
+                .addColumn("rating", NUMBER)
+                .build();
 
         objectReader = new CsvMapper().readerFor(Album.class).with(schema);
     }
@@ -47,7 +51,7 @@ public class AlbumsUpdater {
             return;
         }
 
-        List<Album> albumsToHave = readFromCsv(objectReader, maybeBlob.get().inputStream);
+        List<Album> albumsToHave = readFromCsv(objectReader, maybeBlob.get().getInputStream());
         List<Album> albumsWeHave = albumsBean.getAlbums();
 
         createNewAlbums(albumsToHave, albumsWeHave);
@@ -58,25 +62,25 @@ public class AlbumsUpdater {
 
     private void createNewAlbums(List<Album> albumsToHave, List<Album> albumsWeHave) {
         Stream<Album> albumsToCreate = albumsToHave
-            .stream()
-            .filter(album -> albumsWeHave.stream().noneMatch(album::isEquivalent));
+                .stream()
+                .filter(album -> albumsWeHave.stream().noneMatch(album::isEquivalent));
 
         albumsToCreate.forEach(albumsBean::addAlbum);
     }
 
     private void deleteOldAlbums(List<Album> albumsToHave, List<Album> albumsWeHave) {
         Stream<Album> albumsToDelete = albumsWeHave
-            .stream()
-            .filter(album -> albumsToHave.stream().noneMatch(album::isEquivalent));
+                .stream()
+                .filter(album -> albumsToHave.stream().noneMatch(album::isEquivalent));
 
         albumsToDelete.forEach(albumsBean::deleteAlbum);
     }
 
     private void updateExistingAlbums(List<Album> albumsToHave, List<Album> albumsWeHave) {
         Stream<Album> albumsToUpdate = albumsToHave
-            .stream()
-            .map(album -> addIdToAlbumIfExists(albumsWeHave, album))
-            .filter(Album::hasId);
+                .stream()
+                .map(album -> addIdToAlbumIfExists(albumsWeHave, album))
+                .filter(Album::hasId);
 
         albumsToUpdate.forEach(albumsBean::updateAlbum);
     }
@@ -85,5 +89,23 @@ public class AlbumsUpdater {
         Optional<Album> maybeExisting = existingAlbums.stream().filter(album::isEquivalent).findFirst();
         maybeExisting.ifPresent(existing -> album.setId(existing.getId()));
         return album;
+    }
+
+    public boolean checkIfDone() throws Exception {
+        if (blobStore.get("lastUpdated").isPresent()) {
+            String time = IOUtils.toString(blobStore.get("lastUpdated").get().getInputStream());
+            System.out.println("Last updated time was :" + time);
+            DateTime timeInFile = new DateTime(time);
+            return (timeInFile.plusMinutes(1).isAfterNow());
+        }
+
+        return false;
+
+    }
+
+    public void updateBlob() throws IOException {
+        DateTime dateTime = new DateTime();
+        Blob blob = new Blob("lastUpdated", new ByteArrayInputStream(dateTime.toString().getBytes(StandardCharsets.UTF_8)), "java.lang.object");
+        blobStore.put(blob);
     }
 }

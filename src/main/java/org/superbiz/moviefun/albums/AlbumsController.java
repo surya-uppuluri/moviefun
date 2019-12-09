@@ -68,10 +68,10 @@ public class AlbumsController {
         Optional<Blob> maybeCoverBlob = blobStore.get(getCoverBlobName(albumId));
         Blob coverBlob = maybeCoverBlob.orElseGet(this::buildDefaultCoverBlob);
 
-        byte[] imageBytes = IOUtils.toByteArray(coverBlob.inputStream);
+        byte[] imageBytes = IOUtils.toByteArray(coverBlob.getInputStream());
 
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.parseMediaType(coverBlob.contentType));
+        headers.setContentType(MediaType.parseMediaType(coverBlob.getContentType()));
         headers.setContentLength(imageBytes.length);
 
         return new HttpEntity<>(imageBytes, headers);

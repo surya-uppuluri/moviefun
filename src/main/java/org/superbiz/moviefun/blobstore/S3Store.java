@@ -27,7 +27,7 @@ public class S3Store implements BlobStore {
 
     @Override
     public void put(Blob blob) throws IOException {
-        s3.putObject(bucketName, blob.name, blob.inputStream, new ObjectMetadata());
+        s3.putObject(bucketName, blob.getName(), blob.getInputStream(), new ObjectMetadata());
     }
 
     @Override
